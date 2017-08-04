@@ -1,13 +1,10 @@
 package org.seongjin.SeongPache;
 
-/**
- * Hello world!
- *
- */
 public class App 
 {
     public static void main( String[] args )
     {
-        System.out.println( "Hello World!" );
+        HttpServer httpServer = new HttpServer(8080);
+        httpServer.run();
     }
 }
