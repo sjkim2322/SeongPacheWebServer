@@ -13,29 +13,29 @@ import org.slf4j.LoggerFactory;
 
 public class HttpServer {
 	
-	private static Logger logger = LoggerFactory.getLogger(HttpServer.class);
-	private int port;
-	private ServerSocket serverSocket;
-	private Socket clientSocket;
-	private String line = null;
-	private BufferedReader in;
-	private PrintWriter out;
+	private static final Logger logger = LoggerFactory.getLogger(HttpServer.class);
+	private int portNumber;
+	
+	
 	
 	public HttpServer(int port) {
-		this.port = port;
+		this.portNumber = port;
+	}
+	
+	public void run() {
+		Socket clientSocket = null;
+		ServerSocket serverSocket = null;
+		
 		try {
-			serverSocket = new ServerSocket(this.port);
+			serverSocket = new ServerSocket(this.portNumber);
 			logger.info("Initialized");
 		} catch (IOException e) {
 			logger.error("Failed to create ServerSocket");
 		}
-
-		
-	}
 	
-	public void run() {
-		System.out.println("Waiting Client`s Request");
+		
 		try {
+			logger.info("Waiting Client`s Request");
 			clientSocket = serverSocket.accept();
 			logger.info("Request accept !");
 		} catch (IOException e) {
