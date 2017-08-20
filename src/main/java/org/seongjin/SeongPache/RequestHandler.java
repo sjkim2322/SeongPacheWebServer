@@ -11,40 +11,46 @@ import org.slf4j.LoggerFactory;
 
 public class RequestHandler {
 
-	private static Logger logger = LoggerFactory.getLogger(HttpServer.class);
-
+	private static Logger logger = LoggerFactory.getLogger(RequestHandler.class);
 	private Request request;
-	private InputStream bodyInput;
-	private String requestTarget;
-	private InputStream inputStream;
 	private BufferedReader rawRequest;
 
-	public RequestHandler() {
-		this.request = new Request();
-	}
-
 	public Request handle(Socket clientSocket) throws IOException {
+		logger.info("Request accept !");
 		logger.info("Request Handling....");
-		request = new Request();
+		request = new Request(clientSocket);
 		String line;
 		getRawRequest(clientSocket);
-		request.addHeader("Method", getMethod());
+		if(!handlingGeneral().equals(Request.HTTPVERSION)) {
+			logger.error("This Protocol is not HTTP/1.1");
+			return null;
+		}
 		try {
-			while((line = rawRequest.readLine()) != null) {
-				parseRequestLine(line);
-			}
 			logger.info("Header Start");
+			while((line = rawRequest.readLine()) != null) {
+				if(!parseRequestLine(line)) {
+					break;
+				}
+			}
+			logger.info("Header End");
+			logger.info("Request Body Handling..");
+			logger.info("Request Body Handling Complete!");
+			logger.info("Initialize Response");
+			request.setResponse(new ResponseHandler().handle(request));
+			logger.info(request.toString());
 		} catch (IOException e) {
 			logger.error("Failed to Parsing Request Header");
 		}
 
-		return null;
+		return request;
 	}
 
 	private void getRawRequest(Socket clientSocket) {
 		try {
 			rawRequest = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			logger.info("Raw Request Generated");
+			logger.debug(String.valueOf(rawRequest));
+			clientSocket.getInputStream();
 			return;
 		} catch (IOException e) {
 			logger.error("Failed to Generate Raw Request");
@@ -52,19 +58,26 @@ public class RequestHandler {
 		rawRequest = null;
 	}
 
-	private String getMethod() {
+	private String handlingGeneral() {
+		logger.debug("handlingGeneral");
 		String method = null;
 		try {
 			method = rawRequest.readLine();
 		} catch (IOException e) {
 			logger.error("Invalid Request");
 		}
-		return method.split("/")[0].trim();
+		if(method == null) {
+			return "ERROR";
+		}
+		logger.debug(method);
+		String[] general = method.split(" ");
+		request.setMethod(general[0]);
+		request.setRequestTarget(general[1]);
+		return general[2];
 	}
 
-	public boolean parseRequestLine(String line) {
+	private boolean parseRequestLine(String line) {
 		if ("".equals(line)) {
-			logger.info("Header End");
 			return false;
 		} else {
 			String[] parsedLine;
